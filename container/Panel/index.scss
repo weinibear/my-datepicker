@@ -18,6 +18,10 @@
       padding: 0 6px;
     }
   }
+  .xw-calendar-content {
+    height: 224px;
+    overflow: hidden;
+  }
   .xw-calendar-table {
     width: 100%;
     font-size: 12px;
@@ -30,6 +34,15 @@
       text-align: center;
       cursor: pointer;
     }
+  }
+
+  .xw-calendar-years,
+  .xw-calendar-months,
+  .xw-calendar-time {
+    width: 100%;
+    height: 100%;
+    padding: 7px 0;
+    text-align: center;
   }
   .xw-calendar-months > a {
     display: inline-block;
@@ -67,4 +80,60 @@
       color: #ddd;
     }
   }
+}
+
+.xw-time-list-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.xw-time-list-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* 滚动条滑块 */
+.xw-time-list-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.xw-time-list-wrapper:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.xw-time-list-wrapper:first-child {
+  border-left: 0;
+}
+
+.xw-time-picker-item {
+  text-align: left;
+  padding-left: 10px;
+}
+
+.xw-time-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.xw-time-item {
+  width: 100%;
+  font-size: 12px;
+  height: 30px;
+  line-height: 30px;
+  cursor: pointer;
+}
+.xw-time-item:hover {
+  background-color: #eaf8fe;
+}
+.xw-time-item.cur-time {
+  color: #fff;
+  background-color: #1284e7;
 }

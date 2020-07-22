@@ -1,10 +1,24 @@
 import React, { PureComponent } from 'react';
+import PropTypes from 'prop-types';
+
 import classNames from 'classnames';
 import { cloneDeep } from 'loadsh';
+import { getTimeArray } from '../utils';
 import { data } from '../data';
 import './index.scss';
 
 class Panel extends PureComponent {
+  static propTypes = {
+    type: PropTypes.string,
+    firstDayOfWeek: PropTypes.number,
+    format: PropTypes.string,
+    minuteStep: PropTypes.number,
+    panelVal: PropTypes.string, // 面板当前时间
+    isPanelOpen: PropTypes.bool,
+    handleClosePanel: PropTypes.func,
+    handleChangePanelValue: PropTypes.func,
+  };
+
   state = {
     currentPanel: 'date',
     now: new Date(this.props.panelVal), // currentPanel Time
@@ -95,11 +109,23 @@ class Panel extends PureComponent {
   };
 
   selectDate = ({ date }) => {
+    const { now } = this.state;
+    const { type } = this.props;
+    const copyNow = cloneDeep(now);
+    copyNow.setFullYear(date.getFullYear());
+    copyNow.setMonth(date.getMonth());
+    copyNow.setDate(date.getDate());
+    if (type === 'dateTime') {
+      this.setState({
+        currentPanel: 'time',
+      });
+    } else {
+      this.props.handleClosePanel();
+    }
     this.setState({
-      now: new Date(date),
+      now: new Date(copyNow),
     });
-    this.props.handleClosePanel();
-    this.props.handleChangePanelValue(new Date(date));
+    this.props.handleChangePanelValue(new Date(copyNow));
   };
 
   changePanelType = (type) => {
@@ -136,6 +162,24 @@ class Panel extends PureComponent {
     this.props.handleChangePanelValue(copyNow);
   };
 
+  changeTimePanelEl = (type, num) => {
+    const { now } = this.state;
+    const copyNow = cloneDeep(now);
+    if (type === 0) {
+      copyNow.setHours(num);
+    }
+    if (type === 1) {
+      copyNow.setMinutes(num);
+    }
+    if (type === 2) {
+      copyNow.setSeconds(num);
+    }
+    this.setState({
+      now: copyNow,
+    });
+    this.props.handleChangePanelValue(copyNow);
+  };
+
   getDateClasses = (col) => {
     const { classes, title } = col;
     let otherClass = '';
@@ -165,6 +209,23 @@ class Panel extends PureComponent {
     }
   };
 
+  getTimeClasses = (type, num) => {
+    const { now } = this.state;
+    const classes = 'xw-time-item';
+    let otherClass = '';
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    if (
+      (type === 0 && num === h) ||
+      (type === 1 && num === m) ||
+      (type === 2 && num === s)
+    ) {
+      otherClass = 'cur-time';
+    }
+    return classNames(classes, otherClass);
+  };
+
   getCurrentYears = () => {
     const { now } = this.state;
     const firstYear = Math.floor(now.getFullYear() / 10) * 10;
@@ -179,6 +240,15 @@ class Panel extends PureComponent {
     const { firstDayOfWeek } = this.props;
     const days = data.weeks;
     return days.concat(days).slice(firstDayOfWeek, firstDayOfWeek + 7);
+  };
+
+  getTimes = () => {
+    const { minuteStep } = this.props;
+    const times = [getTimeArray(24, 1), getTimeArray(60, minuteStep || 1)];
+    if (minuteStep === 0) {
+      times.push(getTimeArray(60, 1));
+    }
+    return times;
   };
 
   renderDatePanel = () => {
@@ -213,22 +283,6 @@ class Panel extends PureComponent {
     );
   };
 
-  renderMonthPanel = () => {
-    return (
-      <div className='xw-calendar-months'>
-        {data.months.map((v, i) => (
-          <a
-            key={v}
-            className={this.getMonthClasses(i)}
-            onClick={(e) => this.changeMonthPanelEl(e, i)}
-          >
-            {v}
-          </a>
-        ))}
-      </div>
-    );
-  };
-
   renderYearPanel = () => {
     const currentYears = this.getCurrentYears();
     return (
@@ -246,17 +300,61 @@ class Panel extends PureComponent {
     );
   };
 
+  renderMonthPanel = () => {
+    return (
+      <div className='xw-calendar-months'>
+        {data.months.map((v, i) => (
+          <a
+            key={v}
+            className={this.getMonthClasses(i)}
+            onClick={(e) => this.changeMonthPanelEl(e, i)}
+          >
+            {v}
+          </a>
+        ))}
+      </div>
+    );
+  };
+
+  renderDateTimePanel = () => {
+    const times = this.getTimes();
+    console.log(times);
+    return (
+      <div className='xw-calendar-time'>
+        {times.map((time, index) => (
+          <div
+            key={index}
+            className='xw-time-list-wrapper'
+            style={{ width: `${100 / times.length}%` }}
+          >
+            <ul className='xw-time-list'>
+              {time.map((num) => (
+                <li
+                  key={num}
+                  className={this.getTimeClasses(index, num)}
+                  onClick={() => this.changeTimePanelEl(index, num)}
+                >
+                  {num}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   renderContent = () => {
     const { currentPanel } = this.state;
     switch (currentPanel) {
       case 'date':
         return this.renderDatePanel();
-
-      case 'month':
-        return this.renderMonthPanel();
-
       case 'year':
         return this.renderYearPanel();
+      case 'month':
+        return this.renderMonthPanel();
+      case 'time':
+        return this.renderDateTimePanel();
 
       default:
         return this.renderDatePanel();
@@ -267,51 +365,60 @@ class Panel extends PureComponent {
     const { now, currentPanel } = this.state;
     return (
       <div className='xw-calendar'>
-        <div className='xw-calendar-header'>
-          <div>
-            <a
-              className='xw-calendar__prev-icon'
-              onClick={() => this.changeYear(-1)}
-            >
-              &laquo;
+        {currentPanel === 'time' && (
+          <div className='xw-calendar-header'>
+            <a onClick={() => this.changePanelType('date')}>
+              {now.toLocaleDateString()}
             </a>
-            {currentPanel === 'date' && (
+          </div>
+        )}
+        {!(currentPanel === 'time') && (
+          <div className='xw-calendar-header'>
+            <div>
               <a
                 className='xw-calendar__prev-icon'
-                onClick={() => this.changeMonth(-1)}
+                onClick={() => this.changeYear(-1)}
               >
-                &lsaquo;
+                &laquo;
               </a>
-            )}
-          </div>
-          <div>
-            <a
-              onClick={() => this.changePanelType('month')}
-              style={{ marginRight: '5px' }}
-            >
-              {now.getMonth() + 1}
-            </a>
-            <a onClick={() => this.changePanelType('year')}>
-              {now.getFullYear()}
-            </a>
-          </div>
-          <div>
-            {currentPanel === 'date' && (
+              {currentPanel === 'date' && (
+                <a
+                  className='xw-calendar__prev-icon'
+                  onClick={() => this.changeMonth(-1)}
+                >
+                  &lsaquo;
+                </a>
+              )}
+            </div>
+            <div>
+              <a
+                onClick={() => this.changePanelType('month')}
+                style={{ marginRight: '5px' }}
+              >
+                {now.getMonth() + 1}
+              </a>
+              <a onClick={() => this.changePanelType('year')}>
+                {now.getFullYear()}
+              </a>
+            </div>
+            <div>
+              {currentPanel === 'date' && (
+                <a
+                  className='xw-calendar__next-icon'
+                  onClick={() => this.changeMonth(1)}
+                >
+                  &rsaquo;
+                </a>
+              )}
               <a
                 className='xw-calendar__next-icon'
-                onClick={() => this.changeMonth(1)}
+                onClick={() => this.changeYear(1)}
               >
-                &rsaquo;
+                &raquo;
               </a>
-            )}
-            <a
-              className='xw-calendar__next-icon'
-              onClick={() => this.changeYear(1)}
-            >
-              &raquo;
-            </a>
+            </div>
           </div>
-        </div>
+        )}
         <div className='xw-calendar-content'>{this.renderContent()}</div>
       </div>
     );

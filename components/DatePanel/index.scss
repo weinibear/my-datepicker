@@ -1,0 +1,13 @@
+.xw-calendar-table {
+  width: 100%;
+  font-size: 12px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+  td {
+    width: 32px;
+    height: 32px;
+    text-align: center;
+    cursor: pointer;
+  }
+}

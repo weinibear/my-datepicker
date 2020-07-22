@@ -1,0 +1,14 @@
+.xw-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  line-height: 34px;
+  text-align: center;
+  & a:hover {
+    color: #1284e7;
+  }
+  .xw-calendar__prev-icon,
+  .xw-calendar__next-icon {
+    font-size: 20px;
+    padding: 0 6px;
+  }
+}

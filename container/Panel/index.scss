@@ -4,36 +4,9 @@
     text-decoration: none;
     cursor: pointer;
   }
-  .xw-calendar-header {
-    display: flex;
-    justify-content: space-between;
-    line-height: 34px;
-    text-align: center;
-    & a:hover {
-      color: #1284e7;
-    }
-    .xw-calendar__prev-icon,
-    .xw-calendar__next-icon {
-      font-size: 20px;
-      padding: 0 6px;
-    }
-  }
   .xw-calendar-content {
     height: 224px;
     overflow: hidden;
-  }
-  .xw-calendar-table {
-    width: 100%;
-    font-size: 12px;
-    table-layout: fixed;
-    border-collapse: collapse;
-    border-spacing: 0;
-    td {
-      width: 32px;
-      height: 32px;
-      text-align: center;
-      cursor: pointer;
-    }
   }
 
   .xw-calendar-years,
@@ -44,13 +17,6 @@
     padding: 7px 0;
     text-align: center;
   }
-  .xw-calendar-months > a {
-    display: inline-block;
-    width: 30%;
-    line-height: 40px;
-    text-align: center;
-    margin: 8px 1.5%;
-  }
   .xw-calendar-years > a {
     display: inline-block;
     width: 40%;
@@ -58,9 +24,17 @@
     line-height: 40px;
     text-align: center;
   }
+  .xw-calendar-months > a {
+    display: inline-block;
+    width: 30%;
+    line-height: 40px;
+    text-align: center;
+    margin: 8px 1.5%;
+  }
+
   .xw-calendar-table td:hover,
-  .xw-calendar-months > a:hover,
-  .xw-calendar-years > a:hover {
+  .xw-calendar-years > a:hover,
+  .xw-calendar-months > a:hover {
     background-color: #eaf8fe;
   }
 

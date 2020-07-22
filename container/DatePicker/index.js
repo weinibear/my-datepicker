@@ -1,65 +1,128 @@
 import React, { PureComponent } from 'react';
+import PropTypes from 'prop-types';
 import Panel from '../Panel';
 
-import Languages from '../languages';
 import './index.scss';
 
 class DatePicker extends PureComponent {
+  static propTypes = {
+    type: PropTypes.string, // 面板类型(日期，年，月等)
+    firstDayOfWeek: PropTypes.number, // 一周第一天显示星期几[1,7]
+    editable: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    type: 'date',
+    firstDayOfWeek: 7,
+    editable: true,
+  };
   constructor(props) {
     super(props);
     this.state = {
       isPanelOpen: false,
-      langs: 'zh',
-      translationData: Languages['zh'],
-      firstDayOfWeek: 7,
-      userInput: '',
+      panelVal: new Date().toLocaleDateString(), // 当前面板时间
+      userInput: new Date().toLocaleDateString(),
     };
   }
 
-  static defaultProps = {
-    type: 'date',
-  };
+  componentDidMount() {
+    this.initClickoutSide();
+  }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.langs !== this.state.langs) {
-      this.setState({
-        translationData: Languages(this.state.langs),
-      });
+    if (
+      prevState.isPanelOpen !== this.state.isPanelOpen &&
+      this.state.userInput !== this.state.panelVal
+    ) {
+      this.asyncPanel();
     }
   }
 
-  handleInputClick = () => {
-    this.setState((prevState) => {
-      return {
-        isPanelOpen: !prevState.isPanelOpen,
-      };
+  // 点击区域外关闭弹框
+  initClickoutSide = () => {
+    this.panelRef = React.createRef();
+    this.inputRef = React.createRef();
+    window.addEventListener('click', (e) => {
+      if (
+        !this.panelRef.current.contains(e.target) &&
+        !this.inputRef.current.contains(e.target)
+      ) {
+        this.setState({ isPanelOpen: false });
+      }
     });
   };
 
-  handleInput = (e) => {
-    console.log(date);
+  asyncPanel = () => {
+    const { userInput, panelVal } = this.state;
+    // 如果输入日期合乎规范，改变面板日期，否则，还原输入日期
+    if (this.isValidDate(userInput)) {
+      this.setState({
+        panelVal: new Date(userInput).toLocaleDateString(),
+        userInput: new Date(userInput).toLocaleDateString(),
+      });
+    } else {
+      this.setState({
+        userInput: panelVal,
+      });
+    }
+  };
+
+  // 点击输入框
+  handleInputClick = () => {
+    this.setState((prevState) => ({
+      isPanelOpen: !prevState.isPanelOpen,
+    }));
+  };
+
+  // 用户输入
+  handleInputChange = (e) => {
+    const { value } = e.target;
+    console.log(value);
     this.setState({
-      userInput: e.target.value,
+      userInput: value,
     });
+  };
+
+  // 改变面板日期，改变input
+  handleChangePanelValue = (date) => {
+    console.log(date);
+    const val = date.toLocaleDateString();
+    this.setState({
+      panelVal: val,
+      userInput: val,
+    });
+  };
+
+  isValidDate = (date) => {
+    return !!new Date(date).getTime();
   };
 
   render() {
-    const { isPanelOpen, translationData, firstDayOfWeek } = this.state;
-    const { type } = this.props;
+    const { isPanelOpen, panelVal, userInput } = this.state;
+    const { type, firstDayOfWeek, editable } = this.props;
     return (
       <div>
         <input
           type='text'
           className='input'
+          ref={this.inputRef}
+          value={userInput}
           onClick={this.handleInputClick}
-          onInput={this.handleInput}
+          readOnly={!editable}
+          onChange={this.handleInputChange}
         />
-        <div className='panel' style={!isPanelOpen ? { display: 'none' } : {}}>
+        <div
+          ref={this.panelRef}
+          className='panel'
+          style={!isPanelOpen ? { display: 'none' } : {}}
+        >
           <Panel
-            translationData={translationData}
-            firstDayOfWeek={firstDayOfWeek}
-            show={isPanelOpen}
             type={type}
+            firstDayOfWeek={firstDayOfWeek}
+            panelVal={panelVal}
+            handleChangePanelValue={this.handleChangePanelValue}
+            isPanelOpen={isPanelOpen}
+            handleClosePanel={() => this.setState({ isPanelOpen: false })}
           />
         </div>
       </div>

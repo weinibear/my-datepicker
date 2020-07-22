@@ -1,43 +1,56 @@
 import React, { PureComponent } from 'react';
-
-import { getCalendar } from '../utils';
+import classNames from 'classnames';
+import { cloneDeep } from 'loadsh';
+import { data } from '../data';
 import './index.scss';
 
 class Panel extends PureComponent {
   state = {
-    currentMonth: 1,
-    currentYear: 2020,
-    months: {},
-    dates: [],
-    now: new Date(),
+    currentPanel: 'date',
+    now: new Date(this.props.panelVal), // currentPanel Time
   };
 
-  componentWillReceiveProps(nextProps) {
-    if (!this.props.show && nextProps.show) {
-      this.updateNow();
-      this.updateCalendar();
+  componentDidMount() {}
+
+  componentDidUpdate(preProps, preStates) {
+    if (!preProps.isPanelOpen && this.props.isPanelOpen) {
+      this.initPanel();
+    }
+    if (preProps.panelVal !== this.props.panelVal) {
+      this.setState({
+        now: new Date(this.props.panelVal),
+      });
     }
   }
 
-  // componentDidMount(){
-  //   this.updateCalendar()
-  // }
+  initPanel = () => {
+    this.changePanelType('date');
+  };
 
-  updateNow = () => {
-    const { value } = this.props;
-    this.setState({
-      now: value ? new Date(value) : new Date(),
+  getCalendar = (time, firstday, length, classes) => {
+    return Array.apply(null, { length }).map((v, i) => {
+      let day = firstday + i;
+      const date = new Date(time.getFullYear(), time.getMonth(), day, 0, 0, 0);
+      date.setDate(day);
+      return {
+        title: date.toLocaleDateString(),
+        date,
+        day,
+        classes,
+      };
     });
   };
 
-  updateCalendar = () => {
+  // 计算当前日期下面板数据
+  // lastMonth  currentMonth  nextMonth
+  getPanelDateArr = () => {
     const { firstDayOfWeek } = this.props;
-    const { now } = this.state;
-    const time = new Date(now);
+    const time = new Date(this.state.now);
     time.setDate(0); // 把时间切换到上个月最后一天
+
     const lastMonthLength = ((time.getDay() + 7 - firstDayOfWeek) % 7) + 1; // time.getDay() 0是星期天, 1是星期一 ...
     const lastMonthfirst = time.getDate() - (lastMonthLength - 1);
-    const lastMonth = getCalendar(
+    const lastMonth = this.getCalendar(
       time,
       lastMonthfirst,
       lastMonthLength,
@@ -46,11 +59,11 @@ class Panel extends PureComponent {
 
     time.setMonth(time.getMonth() + 2, 0); // 切换到这个月最后一天
     const curMonthLength = time.getDate();
-    const curMonth = getCalendar(time, 1, curMonthLength, 'curMonth');
+    const curMonth = this.getCalendar(time, 1, curMonthLength, 'curMonth');
 
     time.setMonth(time.getMonth() + 1, 1);
     const nextMonthLength = 42 - (lastMonthLength + curMonthLength);
-    const nextMonth = getCalendar(time, 1, nextMonthLength, 'nextMonth');
+    const nextMonth = this.getCalendar(time, 1, nextMonthLength, 'nextMonth');
 
     // 分割数组
     let index = 0;
@@ -60,170 +73,246 @@ class Panel extends PureComponent {
     while (index < 42) {
       result[resIndex++] = arr.slice(index, (index += 7));
     }
-    this.setState({
-      dates: result,
-    });
+    return result;
   };
 
-  changeYear = () => {};
-
-  changeMonth = () => {};
-
-  showMonths = () => {};
-  showYears = () => {};
-
-  isDisabled = (date) => {
-    const {
-      startAt,
-      endAt,
-      disabledDays = [],
-      notBefore,
-      notAfter,
-    } = this.props;
-    const now = new Date(date).getTime();
-    if (
-      disabledDays.some((v) => new Date(v).setHours(0, 0, 0, 0) === now) ||
-      (notBefore !== '' && now < new Date(notBefore).setHours(0, 0, 0, 0)) ||
-      (notAfter !== '' && now > new Date(notAfter).setHours(0, 0, 0, 0)) ||
-      (startAt && now < new Date(startAt).setHours(0, 0, 0, 0)) ||
-      (endAt && now > new Date(endAt).setHours(0, 0, 0, 0))
-    ) {
-      return true;
-    }
-    return false;
-  };
-
-  getDateClasses = (cell) => {
-    const { value, startAt, endAt } = this.props;
-    const classes = [];
-    const cellTime = new Date(cell.date).setHours(0, 0, 0, 0);
-    const curTime = value ? new Date(value).setHours(0, 0, 0, 0) : 0;
-    const startTime = startAt ? new Date(startAt).setHours(0, 0, 0, 0) : 0;
-    const endTime = endAt ? new Date(endAt).setHours(0, 0, 0, 0) : 0;
-    const today = new Date().setHours(0, 0, 0, 0);
-    if (this.isDisabled(cellTime)) {
-      return 'disabled';
-    }
-    classes.push(cell.classes);
-
-    if (cellTime === today) {
-      classes.push('today');
-    }
-
-    // range classes
-    if (curTime) {
-      if (cellTime === curTime) {
-        classes.push('current');
-      } else if (startTime && cellTime <= curTime) {
-        classes.push('inrange');
-      } else if (endTime && cellTime >= curTime) {
-        classes.push('inrange');
-      }
-    }
-    console.log(classes);
-    return classes.join(' ');
-  };
-
-  selectDate = (cell) => {
-    const { type, value, startAt, onInput } = this.props;
-    const classes = this.getDateClasses(cell);
-    if (classes.indexOf('disabled') !== -1) {
-      return;
-    }
-    let date = new Date(cell.date);
-    // datetime 跳转到 timepicker
-    if (type === 'datetime') {
-      // 保留时分秒
-      if (value instanceof Date) {
-        date.setHours(value.getHours(), value.getMinutes(), value.getSeconds());
-      }
-      if (startAt && date.getTime() < new Date(startAt).getTime()) {
-        date = new Date(startAt);
-      } else if (endAt && date.getTime() > new Date(endAt).getTime()) {
-        date = new Date(endAt);
-      }
-      this.currentPanel = 'time';
-      this.$nextTick(() => {
-        Array.prototype.forEach.call(
-          this.$el.querySelectorAll('.mx-time-list-wrapper'),
-          (el) => {
-            this.scrollIntoView(el, el.querySelector('.cur-time'));
-          }
-        );
-      });
-    }
+  changeYear = (flag) => {
+    const { now, currentPanel } = this.state;
+    const date = new Date(now);
+    const panelYear = currentPanel === 'year' ? 10 * flag : flag;
+    date.setFullYear(date.getFullYear() + panelYear);
     this.setState({
       now: date,
     });
-    // this.$emit('input', date)
-    onInput(date);
-    // this.$emit('select');
+  };
+
+  changeMonth = (flag) => {
+    const date = new Date(this.state.now);
+    date.setMonth(date.getMonth() + flag);
+    this.setState({
+      now: date,
+    });
+  };
+
+  selectDate = ({ date }) => {
+    this.setState({
+      now: new Date(date),
+    });
+    this.props.handleClosePanel();
+    this.props.handleChangePanelValue(new Date(date));
+  };
+
+  changePanelType = (type) => {
+    this.setState({
+      currentPanel: type,
+    });
+  };
+
+  // 选择年份
+  changeYearPanelEl = (e, year) => {
+    const { now } = this.state;
+    e.stopPropagation();
+    console.log(now);
+    const copyNow = cloneDeep(now);
+    copyNow.setFullYear(year);
+    this.setState({
+      now: copyNow,
+    });
+    this.changePanelType('month');
+    this.props.handleChangePanelValue(copyNow);
+  };
+
+  // 选择月份
+  changeMonthPanelEl = (e, monthIndex) => {
+    const { now } = this.state;
+    e.stopPropagation();
+    console.log(now);
+    const copyNow = cloneDeep(now);
+    copyNow.setMonth(monthIndex);
+    this.setState({
+      now: copyNow,
+    });
+    this.changePanelType('date');
+    this.props.handleChangePanelValue(copyNow);
+  };
+
+  getDateClasses = (col) => {
+    const { classes, title } = col;
+    let otherClass = '';
+    if (new Date().toLocaleDateString() === title) {
+      otherClass = 'today'; // 今天日期
+    }
+    if (
+      classes === 'curMonth' &&
+      this.state.now.toLocaleDateString() === title
+    ) {
+      otherClass = 'current'; // 当前活跃日期
+    }
+    return classNames(classes, otherClass);
+  };
+
+  getMonthClasses = (monthIndex) => {
+    const { now } = this.state;
+    if (now.getMonth() === monthIndex) {
+      return 'current';
+    }
+  };
+
+  getYearClasses = (v) => {
+    const { now } = this.state;
+    if (now.getFullYear() === v) {
+      return 'current';
+    }
+  };
+
+  getCurrentYears = () => {
+    const { now } = this.state;
+    const firstYear = Math.floor(now.getFullYear() / 10) * 10;
+    let years = [];
+    for (let i = 0; i < 10; i++) {
+      years.push(firstYear + i);
+    }
+    return years;
+  };
+
+  getWeeks = () => {
+    const { firstDayOfWeek } = this.props;
+    const days = data.weeks;
+    return days.concat(days).slice(firstDayOfWeek, firstDayOfWeek + 7);
+  };
+
+  renderDatePanel = () => {
+    const panelDateArr = this.getPanelDateArr();
+    const weeksHead = this.getWeeks();
+    console.log(panelDateArr);
+    return (
+      <table className='xw-calendar-table'>
+        <thead>
+          <tr>
+            {weeksHead.map((v) => (
+              <td key={v}>{v}</td>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {panelDateArr.map((row, i) => (
+            <tr key={i}>
+              {row.map((col, j) => (
+                <td
+                  key={j}
+                  className={this.getDateClasses(col)}
+                  onClick={() => this.selectDate(col)}
+                >
+                  {col.day}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  renderMonthPanel = () => {
+    return (
+      <div className='xw-calendar-months'>
+        {data.months.map((v, i) => (
+          <a
+            key={v}
+            className={this.getMonthClasses(i)}
+            onClick={(e) => this.changeMonthPanelEl(e, i)}
+          >
+            {v}
+          </a>
+        ))}
+      </div>
+    );
+  };
+
+  renderYearPanel = () => {
+    const currentYears = this.getCurrentYears();
+    return (
+      <div className='xw-calendar-years'>
+        {currentYears.map((v) => (
+          <a
+            key={v}
+            className={this.getYearClasses(v)}
+            onClick={(e) => this.changeYearPanelEl(e, v)}
+          >
+            {v}
+          </a>
+        ))}
+      </div>
+    );
+  };
+
+  renderContent = () => {
+    const { currentPanel } = this.state;
+    switch (currentPanel) {
+      case 'date':
+        return this.renderDatePanel();
+
+      case 'month':
+        return this.renderMonthPanel();
+
+      case 'year':
+        return this.renderYearPanel();
+
+      default:
+        return this.renderDatePanel();
+    }
   };
 
   render() {
-    const { months, currentYear, dates } = this.state;
-    const { translationData } = this.props;
-    const { days } = translationData;
+    const { now, currentPanel } = this.state;
     return (
-      <div className='mx-calendar'>
-        <div className='mx-calendar-header'>
-          <a
-            className='mx-calendar__prev-icon'
-            onClick={() => this.changeYear(-1)}
-          >
-            &laquo;
-          </a>
-          <a
-            className='mx-calendar__prev-icon'
-            onClick={() => this.changeMonth(-1)}
-          >
-            &lsaquo;
-          </a>
-          <a
-            className='mx-calendar__next-icon'
-            onClick={() => this.changeYear(1)}
-          >
-            &raquo;
-          </a>
-          <a
-            className='mx-calendar__next-icon'
-            onClick={() => this.changeMonth(1)}
-          >
-            &rsaquo;
-          </a>
-          <a onClick={this.showMonths}>{months.currentMonth}</a>
-          <a onClick={this.showYears}>{currentYear}</a>
+      <div className='xw-calendar'>
+        <div className='xw-calendar-header'>
+          <div>
+            <a
+              className='xw-calendar__prev-icon'
+              onClick={() => this.changeYear(-1)}
+            >
+              &laquo;
+            </a>
+            {currentPanel === 'date' && (
+              <a
+                className='xw-calendar__prev-icon'
+                onClick={() => this.changeMonth(-1)}
+              >
+                &lsaquo;
+              </a>
+            )}
+          </div>
+          <div>
+            <a
+              onClick={() => this.changePanelType('month')}
+              style={{ marginRight: '5px' }}
+            >
+              {now.getMonth() + 1}
+            </a>
+            <a onClick={() => this.changePanelType('year')}>
+              {now.getFullYear()}
+            </a>
+          </div>
+          <div>
+            {currentPanel === 'date' && (
+              <a
+                className='xw-calendar__next-icon'
+                onClick={() => this.changeMonth(1)}
+              >
+                &rsaquo;
+              </a>
+            )}
+            <a
+              className='xw-calendar__next-icon'
+              onClick={() => this.changeYear(1)}
+            >
+              &raquo;
+            </a>
+          </div>
         </div>
-        <div className='mx-calendar-content'>
-          <table className='mx-calendar-table'>
-            <thead>
-              <tr>
-                {days.map((day, index) => (
-                  <th key={index}>{day}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {dates.map((row, index) => (
-                <tr key={index}>
-                  {row.map((cell) => (
-                    <td
-                      className={this.getDateClasses(cell)}
-                      title={cell.title}
-                      onClick={() => this.selectDate(cell)}
-                    >
-                      {cell.day}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              {/* <tr v-for="row in dates">
-            <td v-for="cell in row" :title="cell.title" :class="getDateClasses(cell)" @click="selectDate(cell)">{{cell.day}}</td>
-          </tr> */}
-            </tbody>
-          </table>
-        </div>
-        <div className='xw-panel-footer'></div>
+        <div className='xw-calendar-content'>{this.renderContent()}</div>
       </div>
     );
   }

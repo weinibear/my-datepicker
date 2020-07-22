@@ -1,83 +1,70 @@
-.mx-calendar {
-  float: left;
-  width: 90%;
+.xw-calendar {
   padding: 6px 12px;
   a {
-    color: inherit;
     text-decoration: none;
     cursor: pointer;
   }
-}
-.mx-calendar-header {
-  line-height: 34px;
-  text-align: center;
-  & > a:hover {
-    color: #1284e7;
+  .xw-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    line-height: 34px;
+    text-align: center;
+    & a:hover {
+      color: #1284e7;
+    }
+    .xw-calendar__prev-icon,
+    .xw-calendar__next-icon {
+      font-size: 20px;
+      padding: 0 6px;
+    }
   }
-}
-
-.mx-calendar__next-icon,
-.mx-calendar__prev-icon {
-  font-size: 20px;
-  padding: 0 6px;
-}
-
-.mx-calendar__prev-icon {
-  float: left;
-}
-
-.mx-calendar__next-icon {
-  float: right;
-}
-
-.mx-calendar-table {
-  width: 100%;
-  font-size: 12px;
-  table-layout: fixed;
-  border-collapse: collapse;
-  border-spacing: 0;
-  td {
-    cursor: pointer;
+  .xw-calendar-table {
+    width: 100%;
+    font-size: 12px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border-spacing: 0;
+    td {
+      width: 32px;
+      height: 32px;
+      text-align: center;
+      cursor: pointer;
+    }
   }
-  .today {
-    color: #20a0ff;
+  .xw-calendar-months > a {
+    display: inline-block;
+    width: 30%;
+    line-height: 40px;
+    text-align: center;
+    margin: 8px 1.5%;
   }
-  .lastMonth,
-  .nextMonth {
-    color: #ddd;
+  .xw-calendar-years > a {
+    display: inline-block;
+    width: 40%;
+    margin: 1px 5%;
+    line-height: 40px;
+    text-align: center;
   }
-}
+  .xw-calendar-table td:hover,
+  .xw-calendar-months > a:hover,
+  .xw-calendar-years > a:hover {
+    background-color: #eaf8fe;
+  }
 
-.mx-calendar-table td,
-.mx-calendar-table th {
-  width: 32px;
-  height: 32px;
-  text-align: center;
-}
-
-.mx-calendar-table td {
-  cursor: pointer;
-}
-
-.mx-calendar-table td.inrange,
-.mx-calendar-table td:hover,
-.mx-calendar-year > a:hover,
-.mx-calendar-month > a:hover {
-  background-color: #eaf8fe;
-}
-
-.mx-calendar-table td.current,
-.mx-calendar-year > a.current,
-.mx-calendar-month > a.current {
-  color: #fff;
-  background-color: #1284e7;
-}
-
-.mx-calendar-table td.disabled,
-.mx-time-item.disabled,
-.mx-calendar-year a.disabled,
-.mx-calendar-month a.disabled {
-  cursor: not-allowed;
-  color: #ccc;
-  background-color: #f3f3f3;
+  .xw-calendar-table,
+  .xw-calendar-months,
+  .xw-calendar-years {
+    .today {
+      color: #20a0ff;
+    }
+    .current,
+    .current:hover {
+      background-color: #1284e7;
+      color: #fff;
+    }
+    .lastMonth,
+    .nextMonth {
+      color: #ddd;
+    }
+  }
 }

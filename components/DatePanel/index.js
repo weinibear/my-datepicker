@@ -7,15 +7,16 @@ import './index.scss';
 class DatePanel extends PureComponent {
   static propTypes = {
     firstDayOfWeek: PropTypes.number,
-    now: PropTypes.object,
+    panelDate: PropTypes.object,
     selectDate: PropTypes.func,
+    inputVal: PropTypes.string,
   };
 
   // 计算当前日期下面板数据
   // lastMonth  currentMonth  nextMonth
   getPanelDateArr = () => {
-    const { firstDayOfWeek, now } = this.props;
-    const time = new Date(now);
+    const { firstDayOfWeek, panelDate } = this.props;
+    const time = new Date(panelDate);
     time.setDate(0); // 把时间切换到上个月最后一天
     const lastMonthLength = ((time.getDay() + 7 - firstDayOfWeek) % 7) + 1; // time.getDay() 0是星期天, 1是星期一 ...
     const lastMonthfirst = time.getDate() - (lastMonthLength - 1);
@@ -65,13 +66,13 @@ class DatePanel extends PureComponent {
   };
 
   getDateClasses = (col) => {
-    const { now } = this.props;
+    const { inputVal } = this.props;
     const { classes, title } = col;
     let otherClass = '';
     if (new Date().toLocaleDateString() === title) {
       otherClass = 'today'; // 今天日期
     }
-    if (classes === 'curMonth' && now.toLocaleDateString() === title) {
+    if (new Date(inputVal).toLocaleDateString() === title) {
       otherClass = 'current'; // 当前活跃日期
     }
     return classNames(classes, otherClass);

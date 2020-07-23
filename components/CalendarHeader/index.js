@@ -5,20 +5,21 @@ import './index.scss';
 
 CalendarHeader.propTypes = {
   currentPanel: PropTypes.string,
+  panelDate: PropTypes.object,
 };
 
 function CalendarHeader({
   currentPanel,
-  now,
+  panelDate,
   changePanelType,
   changeYear,
   changeMonth,
 }) {
-  function renderContent() {
+  const renderContent = () => {
     if (currentPanel === 'time') {
       return (
         <a onClick={() => changePanelType('date')}>
-          {now.toLocaleDateString()}
+          {panelDate.toLocaleDateString()}
         </a>
       );
     }
@@ -42,9 +43,11 @@ function CalendarHeader({
             onClick={() => changePanelType('month')}
             style={{ marginRight: '5px' }}
           >
-            {now.getMonth() + 1}
+            {panelDate.getMonth() + 1}
           </a>
-          <a onClick={() => changePanelType('year')}>{now.getFullYear()}</a>
+          <a onClick={() => changePanelType('year')}>
+            {panelDate.getFullYear()}
+          </a>
         </div>
         <div>
           {currentPanel === 'date' && (
@@ -61,7 +64,7 @@ function CalendarHeader({
         </div>
       </>
     );
-  }
+  };
 
   return <div className='xw-calendar-header'>{renderContent()}</div>;
 }

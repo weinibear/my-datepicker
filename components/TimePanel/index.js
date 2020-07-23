@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 TimePanel.propTypes = {
-  now: PropTypes.object,
+  panelDate: PropTypes.object,
   minuteStep: PropTypes.number,
   changeTimePanelEl: PropTypes.func,
 };
 
-function TimePanel({ now, minuteStep, changeTimePanelEl }) {
+function TimePanel({ panelDate, minuteStep, changeTimePanelEl }) {
   const getTimeArray = (len, step = 1) => {
     const length = parseInt(len / step);
     return Array.apply(null, { length }).map((v, i) => i * step);
@@ -25,9 +25,9 @@ function TimePanel({ now, minuteStep, changeTimePanelEl }) {
   const getTimeClasses = (type, num) => {
     const classes = 'xw-time-item';
     let otherClass = '';
-    const h = now.getHours();
-    const m = now.getMinutes();
-    const s = now.getSeconds();
+    const h = panelDate.getHours();
+    const m = panelDate.getMinutes();
+    const s = panelDate.getSeconds();
     if (
       (type === 0 && num === h) ||
       (type === 1 && num === m) ||

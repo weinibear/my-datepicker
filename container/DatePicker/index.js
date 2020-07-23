@@ -25,13 +25,12 @@ class DatePicker extends PureComponent {
 
   constructor(props) {
     super(props);
-    const initVal = formatDate(new Date(), props.format);
     this.panelRef = React.createRef();
     this.inputRef = React.createRef();
     this.state = {
       isPanelOpen: false,
-      panelVal: initVal, // 当前面板时间
-      userInput: initVal,
+      inputVal: formatDate(new Date(), props.format),
+      panelDate: new Date(), // 面板日期
     };
   }
 
@@ -40,9 +39,10 @@ class DatePicker extends PureComponent {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    const { inputVal, panelDate } = this.state;
     if (
       prevState.isPanelOpen !== this.state.isPanelOpen &&
-      this.state.userInput !== this.state.panelVal
+      inputVal !== formatDate(panelDate, this.props.format)
     ) {
       this.asyncPanel();
     }
@@ -73,18 +73,17 @@ class DatePicker extends PureComponent {
   };
 
   asyncPanel = () => {
-    const { userInput, panelVal } = this.state;
+    const { inputVal, panelDate } = this.state;
     const { format } = this.props;
     // 如果输入日期合乎规范，改变面板日期，否则，还原输入日期
-    if (this.isValidDate(userInput)) {
-      const val = formatDate(new Date(userInput), format);
+    if (this.isValidDate(inputVal)) {
       this.setState({
-        panelVal: val,
-        userInput: val,
+        panelDate: new Date(inputVal),
+        inputVal: formatDate(new Date(inputVal), format),
       });
     } else {
       this.setState({
-        userInput: panelVal,
+        inputVal: formatDate(panelDate, format),
       });
     }
   };
@@ -99,20 +98,23 @@ class DatePicker extends PureComponent {
   // 用户输入
   handleInputChange = (e) => {
     const { value } = e.target;
-    console.log(value);
     this.setState({
-      userInput: value,
+      inputVal: value,
     });
   };
 
   // 改变面板日期，改变input
-  handleChangePanelValue = (date) => {
-    console.log(date);
-    const { format } = this.props;
-    const val = formatDate(date, format);
+  handleChangeDate = (date) => {
+    this.handleChangePanelDate(date);
     this.setState({
-      panelVal: val,
-      userInput: val,
+      inputVal: formatDate(date, this.props.format),
+    });
+  };
+
+  // 改变面板日期
+  handleChangePanelDate = (date) => {
+    this.setState({
+      panelDate: date,
     });
   };
 
@@ -121,7 +123,7 @@ class DatePicker extends PureComponent {
   };
 
   render() {
-    const { isPanelOpen, panelVal, userInput } = this.state;
+    const { isPanelOpen, panelDate, inputVal } = this.state;
     const { type, firstDayOfWeek, format, minuteStep, editable } = this.props;
     return (
       <div className='xw-datepicker'>
@@ -129,7 +131,7 @@ class DatePicker extends PureComponent {
           type='text'
           className='input'
           ref={this.inputRef}
-          value={userInput}
+          value={inputVal}
           onClick={this.handleInputClick}
           readOnly={!editable}
           onChange={this.handleInputChange}
@@ -144,8 +146,10 @@ class DatePicker extends PureComponent {
             firstDayOfWeek={firstDayOfWeek}
             format={format}
             minuteStep={minuteStep}
-            panelVal={panelVal}
-            handleChangePanelValue={this.handleChangePanelValue}
+            panelDate={panelDate}
+            inputVal={inputVal}
+            handleChangePanelDate={this.handleChangePanelDate}
+            handleChangeDate={this.handleChangeDate}
             isPanelOpen={isPanelOpen}
             handleClosePanel={() => this.setState({ isPanelOpen: false })}
           />

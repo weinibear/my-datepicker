@@ -18,26 +18,29 @@ class Panel extends PureComponent {
     firstDayOfWeek: PropTypes.number,
     format: PropTypes.string,
     minuteStep: PropTypes.number,
-    panelVal: PropTypes.string, // 面板当前时间
+    inputVal: PropTypes.string,
+    panelDate: PropTypes.object, // 面板当前时间
+    handleChangeDate: PropTypes.func, // 改变当前日期时间
+    handleChangePanelDate: PropTypes.func,
     isPanelOpen: PropTypes.bool,
     handleClosePanel: PropTypes.func,
-    handleChangePanelValue: PropTypes.func,
   };
 
   state = {
     currentPanel: 'date',
-    now: new Date(this.props.panelVal), // currentPanel Time
+    currentPanelDate: this.props.panelDate, // 当前面板日期(年份面板使用,切换年份寻找年份不改变panelDate)
   };
-
-  componentDidMount() {}
 
   componentDidUpdate(preProps, preStates) {
     if (!preProps.isPanelOpen && this.props.isPanelOpen) {
       this.initPanel();
     }
-    if (preProps.panelVal !== this.props.panelVal) {
+    if (
+      preStates.currentPanel !== 'year' &&
+      this.state.currentPanel === 'year'
+    ) {
       this.setState({
-        now: new Date(this.props.panelVal),
+        currentPanelDate: this.props.panelDate,
       });
     }
   }
@@ -46,31 +49,47 @@ class Panel extends PureComponent {
     this.changePanelType('date');
   };
 
-  changeYear = (flag) => {
-    const { now, currentPanel } = this.state;
-    const date = new Date(now);
-    const panelYear = currentPanel === 'year' ? 10 * flag : flag;
-    date.setFullYear(date.getFullYear() + panelYear);
+  changePanelType = (type) => {
     this.setState({
-      now: date,
+      currentPanel: type,
     });
   };
+
+  // 左右切换年份
+  changeYear = (flag) => {
+    const { currentPanelDate, currentPanel } = this.state;
+    const { panelDate } = this.props;
+    if (currentPanel === 'year') {
+      const copyCurrentPanelDate = cloneDeep(currentPanelDate);
+      copyCurrentPanelDate.setFullYear(
+        currentPanelDate.getFullYear() + 10 * flag
+      );
+      this.setState({
+        currentPanelDate: copyCurrentPanelDate,
+      });
+    } else {
+      const copyPanelDate = cloneDeep(panelDate);
+      copyPanelDate.setFullYear(panelDate.getFullYear() + flag);
+      this.props.handleChangePanelDate(copyPanelDate);
+    }
+  };
+
+  // 左右切换月份
 
   changeMonth = (flag) => {
-    const date = new Date(this.state.now);
-    date.setMonth(date.getMonth() + flag);
-    this.setState({
-      now: date,
-    });
+    const { panelDate } = this.props;
+    const copyPanelDate = cloneDeep(panelDate);
+    copyPanelDate.setMonth(panelDate.getMonth() + flag);
+    this.props.handleChangePanelDate(copyPanelDate);
   };
 
+  // 点击选中日期
   selectDate = ({ date }) => {
-    const { now } = this.state;
-    const { type } = this.props;
-    const copyNow = cloneDeep(now);
-    copyNow.setFullYear(date.getFullYear());
-    copyNow.setMonth(date.getMonth());
-    copyNow.setDate(date.getDate());
+    const { type, panelDate } = this.props;
+    const copyPanelDate = cloneDeep(panelDate);
+    copyPanelDate.setFullYear(date.getFullYear());
+    copyPanelDate.setMonth(date.getMonth());
+    copyPanelDate.setDate(date.getDate());
     if (type === 'dateTime') {
       this.setState({
         currentPanel: 'time',
@@ -78,99 +97,71 @@ class Panel extends PureComponent {
     } else {
       this.props.handleClosePanel();
     }
-    this.setState({
-      now: new Date(copyNow),
-    });
-    this.props.handleChangePanelValue(new Date(copyNow));
-  };
-
-  changePanelType = (type) => {
-    this.setState({
-      currentPanel: type,
-    });
+    this.props.handleChangeDate(copyPanelDate);
   };
 
   // 选择年份
   changeYearPanelEl = (e, year) => {
-    const { now } = this.state;
+    const { panelDate } = this.props;
+    const copyPanelDate = cloneDeep(panelDate);
     e.stopPropagation();
-    console.log(now);
-    const copyNow = cloneDeep(now);
-    copyNow.setFullYear(year);
-    this.setState({
-      now: copyNow,
-    });
+    copyPanelDate.setFullYear(year);
     this.changePanelType('month');
-    this.props.handleChangePanelValue(copyNow);
+    this.props.handleChangeDate(copyPanelDate);
   };
 
   // 选择月份
   changeMonthPanelEl = (e, monthIndex) => {
-    const { now } = this.state;
+    const { panelDate } = this.props;
+    const copyPanelDate = cloneDeep(panelDate);
     e.stopPropagation();
-    console.log(now);
-    const copyNow = cloneDeep(now);
-    copyNow.setMonth(monthIndex);
-    this.setState({
-      now: copyNow,
-    });
+    copyPanelDate.setMonth(monthIndex);
     this.changePanelType('date');
-    this.props.handleChangePanelValue(copyNow);
+    this.props.handleChangeDate(copyPanelDate);
   };
 
+  // 选择时间
   changeTimePanelEl = (type, num) => {
-    const { now } = this.state;
-    const copyNow = cloneDeep(now);
+    const { panelDate } = this.props;
+    const copyPanelDate = cloneDeep(panelDate);
     if (type === 0) {
-      copyNow.setHours(num);
+      copyPanelDate.setHours(num);
     }
     if (type === 1) {
-      copyNow.setMinutes(num);
+      copyPanelDate.setMinutes(num);
     }
     if (type === 2) {
-      copyNow.setSeconds(num);
+      copyPanelDate.setSeconds(num);
     }
-    this.setState({
-      now: copyNow,
-    });
-    this.props.handleChangePanelValue(copyNow);
-  };
-
-  getCurrentYears = () => {
-    const { now } = this.state;
-    const firstYear = Math.floor(now.getFullYear() / 10) * 10;
-    let years = [];
-    for (let i = 0; i < 10; i++) {
-      years.push(firstYear + i);
-    }
-    return years;
+    this.props.handleChangeDate(copyPanelDate);
   };
 
   renderContent = () => {
-    const { currentPanel, now } = this.state;
-    const { firstDayOfWeek, minuteStep } = this.props;
+    const { currentPanel, currentPanelDate } = this.state;
+    const { firstDayOfWeek, minuteStep, panelDate, inputVal } = this.props;
     switch (currentPanel) {
       case 'date':
         return (
           <DatePanel
             firstDayOfWeek={firstDayOfWeek}
-            now={now}
             days={data.weeks}
+            inputVal={inputVal}
+            panelDate={panelDate}
             selectDate={this.selectDate}
           />
         );
       case 'year':
         return (
           <YearPanel
-            now={now}
-            currentYears={this.getCurrentYears()}
+            panelDate={panelDate}
+            currentPanelDate={currentPanelDate}
             changeYearPanelEl={this.changeYearPanelEl}
           />
         );
       case 'month':
         return (
           <MonthPanel
-            now={now}
+            panelDate={panelDate}
             months={data.months}
             changeMonthPanelEl={this.changeMonthPanelEl}
           />
@@ -178,7 +169,7 @@ class Panel extends PureComponent {
       case 'time':
         return (
           <TimePanel
-            now={now}
+            panelDate={panelDate}
             minuteStep={minuteStep}
             changeTimePanelEl={this.changeTimePanelEl}
           />
@@ -190,12 +181,13 @@ class Panel extends PureComponent {
   };
 
   render() {
-    const { now, currentPanel } = this.state;
+    const { currentPanel } = this.state;
+    const { panelDate } = this.props;
     return (
       <div className='xw-calendar'>
         <CalendarHeader
           currentPanel={currentPanel}
-          now={now}
+          panelDate={panelDate}
           changePanelType={this.changePanelType}
           changeYear={this.changeYear}
           changeMonth={this.changeMonth}

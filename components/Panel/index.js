@@ -3,17 +3,18 @@ import PropTypes from 'prop-types';
 
 import { cloneDeep } from 'loadsh';
 
-import CalendarHeader from '../../components/CalendarHeader';
-import DatePanel from '../../components/DatePanel';
-import YearPanel from '../../components/YearPanel';
-import MonthPanel from '../../components/MonthPanel';
-import TimePanel from '../../components/TimePanel';
+import CalendarHeader from '../CalendarHeader';
+import DatePanel from '../DatePanel';
+import YearPanel from '../YearPanel';
+import MonthPanel from '../MonthPanel';
+import TimePanel from '../TimePanel';
 
-import { data } from '../data';
 import './index.scss';
 
 class Panel extends PureComponent {
   static propTypes = {
+    style: PropTypes.object,
+    langData: PropTypes.object,
     type: PropTypes.string,
     firstDayOfWeek: PropTypes.number,
     format: PropTypes.string,
@@ -75,7 +76,6 @@ class Panel extends PureComponent {
   };
 
   // 左右切换月份
-
   changeMonth = (flag) => {
     const { panelDate } = this.props;
     const copyPanelDate = cloneDeep(panelDate);
@@ -138,13 +138,19 @@ class Panel extends PureComponent {
 
   renderContent = () => {
     const { currentPanel, currentPanelDate } = this.state;
-    const { firstDayOfWeek, minuteStep, panelDate, inputVal } = this.props;
+    const {
+      langData,
+      firstDayOfWeek,
+      minuteStep,
+      panelDate,
+      inputVal,
+    } = this.props;
     switch (currentPanel) {
       case 'date':
         return (
           <DatePanel
             firstDayOfWeek={firstDayOfWeek}
-            days={data.weeks}
+            days={langData.days}
             inputVal={inputVal}
             panelDate={panelDate}
             selectDate={this.selectDate}
@@ -162,7 +168,7 @@ class Panel extends PureComponent {
         return (
           <MonthPanel
             panelDate={panelDate}
-            months={data.months}
+            months={langData.months}
             changeMonthPanelEl={this.changeMonthPanelEl}
           />
         );
@@ -176,15 +182,15 @@ class Panel extends PureComponent {
         );
 
       default:
-        return this.renderDatePanel();
+        return null;
     }
   };
 
   render() {
     const { currentPanel } = this.state;
-    const { panelDate } = this.props;
+    const { style, panelDate } = this.props;
     return (
-      <div className='xw-calendar'>
+      <div className='xw-calendar' style={style}>
         <CalendarHeader
           currentPanel={currentPanel}
           panelDate={panelDate}

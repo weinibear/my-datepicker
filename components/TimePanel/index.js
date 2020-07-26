@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
@@ -9,6 +9,33 @@ TimePanel.propTypes = {
 };
 
 function TimePanel({ panelDate, minuteStep, changeTimePanelEl }) {
+  const timePanelRef = useRef();
+
+  useEffect(() => {
+    Array.prototype.forEach.call(
+      timePanelRef.current.querySelectorAll('.xw-time-list-wrapper'),
+      (el) => {
+        scrollIntoView(el, el.querySelector('.cur-time'));
+      }
+    );
+  }, []);
+
+  function scrollIntoView(container, selected) {
+    if (!selected) {
+      container.scrollTop = 0;
+      return;
+    }
+    const top = selected.offsetTop;
+    const bottom = selected.offsetTop + selected.offsetHeight;
+    const viewRectTop = container.scrollTop;
+    const viewRectBottom = viewRectTop + container.clientHeight;
+    if (top < viewRectTop) {
+      container.scrollTop = top;
+    } else if (bottom > viewRectBottom) {
+      container.scrollTop = bottom - container.clientHeight;
+    }
+  }
+
   const getTimeArray = (len, step = 1) => {
     const length = parseInt(len / step);
     return Array.apply(null, { length }).map((v, i) => i * step);
@@ -41,7 +68,7 @@ function TimePanel({ panelDate, minuteStep, changeTimePanelEl }) {
   const times = getTimes();
 
   return (
-    <div className='xw-calendar-time'>
+    <div className='xw-calendar-time' ref={timePanelRef}>
       {times.map((time, index) => (
         <div
           key={index}

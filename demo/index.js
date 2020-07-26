@@ -7,7 +7,7 @@ function Demo() {
   return (
     <div>
       <section className='example'>
-        <DatePicker firstDayOfWeek={1} editable={false} />
+        <DatePicker firstDayOfWeek={1} editable lang='en' />
       </section>
       <section className='example'>
         <DatePicker
@@ -15,6 +15,9 @@ function Demo() {
           type='dateTime'
           format='yyyy-MM-dd HH:mm:ss'
         />
+      </section>
+      <section className='example'>
+        <DatePicker firstDayOfWeek={1} range />
       </section>
     </div>
   );

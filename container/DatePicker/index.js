@@ -1,14 +1,21 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
+import { cloneDeep } from 'lodash';
 
 import { formatDate } from '../utils';
-import Panel from '../Panel';
+import Panel from '../../components/Panel';
+import RangePanel from '../../components/RangePanel';
 
+import Languages from '../languages';
 import './index.scss';
 
 class DatePicker extends PureComponent {
   static propTypes = {
+    lang: PropTypes.string, // 语言
     type: PropTypes.string, // 面板类型(日期，年，月等)
+    range: PropTypes.bool, // 选择日期范围模式
+    shortcuts: PropTypes.oneOfType([PropTypes.bool, PropTypes.array]),
     firstDayOfWeek: PropTypes.number, // 一周第一天显示星期几[1,7]
     format: PropTypes.string, // input日期展示格式
     minuteStep: PropTypes.number, // 时、分、秒显示跨度 [0,60]
@@ -16,7 +23,10 @@ class DatePicker extends PureComponent {
   };
 
   static defaultProps = {
+    lang: 'zh',
     type: 'date',
+    range: false,
+    shortcuts: true,
     firstDayOfWeek: 7,
     format: 'yyyy-MM-dd',
     minuteStep: 0,
@@ -31,6 +41,7 @@ class DatePicker extends PureComponent {
       isPanelOpen: false,
       inputVal: formatDate(new Date(), props.format),
       panelDate: new Date(), // 面板日期
+      rangePanelDate: [new Date(), new Date()]
     };
   }
 
@@ -118,13 +129,26 @@ class DatePicker extends PureComponent {
     });
   };
 
+  // 改变rangePanel
+  changeRangePanelDate = (i, date) => {
+    const { rangePanelDate } = this.state;
+    const copyDate = cloneDeep(rangePanelDate);
+    copyDate[i] = date;
+    this.setState({
+      rangePanelDate: copyDate,
+    });
+  };
+
   isValidDate = (date) => {
     return !!new Date(date).getTime();
   };
 
   render() {
-    const { isPanelOpen, panelDate, inputVal } = this.state;
-    const { type, firstDayOfWeek, format, minuteStep, editable } = this.props;
+    const { isPanelOpen, panelDate,rangePanelDate, inputVal } = this.state;
+    const { lang, range, editable } = this.props;
+    const popCls = range
+      ? classNames('xw-datepicker-popup', 'range')
+      : 'xw-datepicker-popup';
     return (
       <div className='xw-datepicker'>
         <input
@@ -138,21 +162,29 @@ class DatePicker extends PureComponent {
         />
         <div
           ref={this.panelRef}
-          className='xw-datepicker-popup'
+          className={popCls}
           style={!isPanelOpen ? { display: 'none' } : {}}
         >
-          <Panel
-            type={type}
-            firstDayOfWeek={firstDayOfWeek}
-            format={format}
-            minuteStep={minuteStep}
-            panelDate={panelDate}
-            inputVal={inputVal}
-            handleChangePanelDate={this.handleChangePanelDate}
-            handleChangeDate={this.handleChangeDate}
-            isPanelOpen={isPanelOpen}
-            handleClosePanel={() => this.setState({ isPanelOpen: false })}
-          />
+          {range ? (
+            <RangePanel
+              langData={Languages[lang]}
+              isPanelOpen={isPanelOpen}
+              rangePanelDate={rangePanelDate}
+              changeRangePanelDate={this.changeRangePanelDate}
+              {...this.props}
+            />
+          ) : ( 
+            <Panel
+              langData={Languages[lang]}
+              panelDate={panelDate}
+              inputVal={inputVal}
+              handleChangePanelDate={this.handleChangePanelDate}
+              handleChangeDate={this.handleChangeDate}
+              isPanelOpen={isPanelOpen}
+              handleClosePanel={() => this.setState({ isPanelOpen: false })}
+              {...this.props}
+            />
+          )}
         </div>
       </div>
     );
